@@ -1,7 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { Employee, Message, SessionType } from "../types";
 
-const apiKey = process.env.API_KEY || '';
+// Ensure process.env.API_KEY is available via Vite's define plugin configuration
+const apiKey = process.env.API_KEY;
+
+// Log a warning in development if key is missing (helps with debugging Vercel setup)
+if (!apiKey) {
+  console.warn("PersonaLab: API Key is missing. The app will run in heuristic simulation mode.");
+}
+
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generatePersonaResponse = async (
@@ -12,7 +19,7 @@ export const generatePersonaResponse = async (
 ): Promise<string> => {
   
   if (!ai) {
-    console.warn("No API Key found. Using heuristic simulation.");
+    // Graceful fallback if no API key is provided
     return simulateHeuristicResponse(employee, userMessage, sessionType);
   }
 
@@ -69,11 +76,12 @@ export const generatePersonaResponse = async (
     
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Estou tendo problemas de conexão no momento. Podemos continuar depois?";
+    // Return a safe fallback message in case of API quotas or network errors
+    return "Estou tendo um momento difícil para processar isso agora. Podemos continuar?";
   }
 };
 
-// Fallback "Mock" Logic translated and updated
+// Fallback "Mock" Logic
 const simulateHeuristicResponse = (employee: Employee, input: string, type: SessionType): string => {
   const { neuroticism, agreeableness } = employee.traits;
   const lowerInput = input.toLowerCase();
